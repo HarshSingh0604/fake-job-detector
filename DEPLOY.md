@@ -1,103 +1,83 @@
 # Deploy for free on Render
 
-The project runs as two free Render web services, both built from the same GitHub repo:
+[`render.yaml`](render.yaml) is a Render **Blueprint**. It creates both services in one go from this repo:
 
-| Service | What it runs | Built from |
-|---|---|---|
-| `fake-job-api` | FastAPI model API | `Dockerfile` |
-| `fake-job-ui` | Streamlit page, which calls the API over HTTPS | `requirements-ui.txt` |
+| Service | What it runs | Built from | Expected URL |
+|---|---|---|---|
+| `fake-job-detector-api` | FastAPI model API | `Dockerfile` | `https://fake-job-detector-api.onrender.com` |
+| `fake-job-detector` | Streamlit page, which calls the API over HTTPS | `requirements-ui.txt` | `https://fake-job-detector.onrender.com` |
 
-The model file is not in git, because `models/` is gitignored. You publish it as a **GitHub release asset**, and the Docker build downloads it from the URL in `MODEL_URL`.
+**Where the model comes from:** the model isn't in git. It's published as the [v1.0 release](https://github.com/HarshSingh0604/fake-job-detector/releases/tag/v1.0) (`fraud_detector.joblib`, 18.1 MB). With no local model, the Docker build downloads it automatically: that URL is the `MODEL_URL` default in the Dockerfile. You don't need to set anything for it.
+
+**About the expected URLs:** Render bases a service's `onrender.com` address on its name, but adds a suffix if the name is already taken. So check the real URLs after the first deploy (step 6).
 
 ## Free tier facts (from Render's docs, November 2026)
 - Each free web service gets **512 MB RAM and 0.1 CPU**. The API used 352–377 MB in local tests.
 - A free service **spins down after 15 minutes** with no traffic, and the next request takes **about a minute** to wake it. If both services are asleep, the first visit can take about 2 minutes.
-- Each workspace gets **750 free instance hours a month**, shared by both services. That's enough for a demo that sleeps when idle.
-- There is no persistent disk. That doesn't matter here, because the model is built into the image.
-- Free services can't receive private-network traffic, so the page calls the API's **public** URL.
+- Each workspace gets **750 free instance hours a month**, shared by both services. Services only use hours while awake, so a demo that's idle most of the time stays within it.
+- Free services can't receive private-network traffic, so the page calls the API's **public** URL. Render can't fill that URL in automatically, which is why step 4 asks you for it.
 
-## 0. Before you start
-- Push the code to a **public** GitHub repo. The release download has to work without logging in.
-- Create a Render account at https://render.com (you can sign up with GitHub).
-- Have the trained model at `models/fraud_detector.joblib`. If it's missing, run `python -m src.train`.
-
-## 1. Publish the model as a GitHub release
-With the GitHub CLI, from the project root:
-```bash
-gh release create model-v1 models/fraud_detector.joblib --title "Model v1" \
-  --notes "RandomForest + SMOTE, decision threshold 0.274"
-```
-Or on github.com: open the repo, go to **Releases → Draft a new release**, set the tag to `model-v1`, attach `models/fraud_detector.joblib`, and click **Publish**.
-
-Your model URL will be:
-```
-https://github.com/<your-user>/<your-repo>/releases/download/model-v1/fraud_detector.joblib
-```
-Check that it downloads. This should print about 18,083,016 bytes:
-```bash
-curl -sL -o /dev/null -w "%{size_download} bytes\n" <MODEL_URL>
-```
-
-## 2. Deploy the API (Docker)
-1. In the Render dashboard, click **New → Web Service**, connect GitHub and choose the repo.
-2. Fill in the form:
-   - **Name:** `fake-job-api`
-   - **Language:** **Docker**
+## Deploy with the Blueprint (exact clicks)
+1. Go to https://dashboard.render.com and sign in. If you don't have an account, choose **GitHub** to sign up.
+2. Click **New** (top right), then **Blueprint**.
+3. Find **`HarshSingh0604/fake-job-detector`** in the repo list and click **Connect** next to it.
+   If it isn't listed, click **Configure account** / **Connect GitHub**, choose **Only select repositories**, pick `fake-job-detector`, approve, and come back.
+4. Fill in the form:
+   - **Blueprint Name:** `fake-job-detector`
    - **Branch:** `main`
-   - **Instance type:** **Free**
-3. Under **Environment Variables**, add `MODEL_URL` with the URL from step 1. Render passes environment variables to `docker build` as build arguments, which is how the Dockerfile's `ARG MODEL_URL` gets it.
-4. Click **Create Web Service**. In the build log, look for: `Model OK: RandomForest smote threshold 0.274`
-5. Once it's live, go to **Settings → Health Checks** and set the path to `/health`.
-6. Test it:
-   ```bash
-   curl https://<api-name>.onrender.com/health
-   curl -X POST https://<api-name>.onrender.com/predict \
-     -H "Content-Type: application/json" -d @app/examples/fake_posting.json
-   ```
-   The interactive docs are at `https://<api-name>.onrender.com/docs`.
-
-## 3. Deploy the Streamlit page
-1. Click **New → Web Service** and choose the same repo.
-2. Fill in the form:
-   - **Name:** `fake-job-ui`
-   - **Language:** **Python 3**. Render may pre-select Docker because the repo has a Dockerfile, so change it.
-   - **Instance type:** **Free**
-   - **Build command:** `pip install -r requirements-ui.txt`
-   - **Start command:** `streamlit run streamlit_app.py --server.port $PORT --server.address 0.0.0.0 --server.headless true`
-3. Under **Environment Variables**, add `API_URL` set to `https://<api-name>.onrender.com`. Use the exact URL Render showed for the API.
-4. You don't need to set a Python version. Render reads it from the `.python-version` file (3.11) in the repo root.
-5. Click **Create Web Service**. Then open the page, click **Try a fake-looking example**, and click **Check posting**.
-
-Put both live links in the README.
+   - **Blueprint Path:** leave as the default (`render.yaml`)
+   - Render lists the 2 services it will create, `fake-job-detector-api` and `fake-job-detector`, both on the **Free** plan.
+   - It asks for **`API_URL`**. Enter exactly: `https://fake-job-detector-api.onrender.com`
+5. Click **Deploy Blueprint** and wait for both services to finish their first deploy. The API's Docker build takes the longest.
+   - In the API's **Logs**, a good build shows:
+     ```
+     Downloading model from https://github.com/HarshSingh0604/fake-job-detector/releases/download/v1.0/fraud_detector.joblib
+     Model OK: RandomForest smote threshold 0.274
+     ```
+   - After that, the API logs `Application startup complete`.
+6. **Check the API's real URL.** Open the `fake-job-detector-api` service; its URL is shown under the name at the top.
+   - If it's exactly `https://fake-job-detector-api.onrender.com`, go to step 7.
+   - If it's different (for example with a suffix like `-abcd`), fix the page's setting:
+     1. Open the **`fake-job-detector`** service and go to **Environment**.
+     2. Edit **`API_URL`** to the real API URL, with no trailing slash.
+     3. Save, and choose the option that **rebuilds and deploys**.
+7. Test both services:
+   - **API:** open `<API URL>/health`. It should show `{"status":"ok","model":"RandomForest",...}`. Then open `<API URL>/docs`.
+   - **Page:** open the `fake-job-detector` service's URL, click **Try a fake-looking example**, then **Check posting**. You should see **"Likely fake"** with risk score **0.812**.
+   - The first page load can take a minute or two while the services wake up.
+8. Send me both URLs and I'll put them in the README.
 
 ## Updating
-- **Code changes:** push to GitHub. By default, Render redeploys both services.
-- **New model:**
+- **Code changes:** push to `main`. Both services redeploy automatically.
+- **A new model:**
   1. Retrain.
-  2. Upload the file as a new release, for example `model-v2`.
-  3. Update `MODEL_URL` on the API service. The service rebuilds.
+  2. Publish the file as a new release:
+     ```bash
+     gh release create v2.0 models/fraud_detector.joblib --title "v2.0: trained model" --notes "..."
+     ```
+  3. On the API service, go to **Environment** and add `MODEL_URL` = `https://github.com/HarshSingh0604/fake-job-detector/releases/download/v2.0/fraud_detector.joblib`. Render passes environment variables to `docker build` as build arguments, so this overrides the Dockerfile default.
+  4. Save and redeploy.
+- **Changing `API_URL` later:** Blueprint syncs ignore `sync: false` variables, so change it only in the dashboard (step 6).
 
 ## Troubleshooting
 | Symptom | Cause and fix |
 |---|---|
-| Build log says `No model: run 'python -m src.train' first or pass --build-arg MODEL_URL=<url>` | `MODEL_URL` isn't set on the API service. |
-| Build fails with `HTTP Error 404` | The URL is wrong or the repo is private. Re-run the curl check from step 1. |
-| The page says "Can't reach the model API" | The API is asleep: wait a minute and refresh. Otherwise `API_URL` is wrong: open `<API_URL>/health` in a browser to check. |
-| The API restarts with an out-of-memory error | The limit is 512 MB and the API uses about 375 MB. Don't add `--workers 2`, which loads a second copy of the model. |
+| The page says "Can't reach the model API" | The API is asleep: wait a minute and refresh. Otherwise `API_URL` is wrong: redo step 6. |
+| API build fails at `Downloading model` with `HTTP Error 404` | The release file is missing, renamed, or the repo isn't public. Open the URL from the log in a browser. |
+| API restarts with an out-of-memory error | The limit is 512 MB and the API uses about 375 MB. Don't add `--workers 2`, which loads a second copy of the model. |
+| The page's build installs Python 3.14 | `.python-version` (3.11) must be in the repo root. Or set `PYTHON_VERSION` on that service to a full 3.11 version, including the patch number. |
+
+## Without the Blueprint
+You can also create the two services by hand: **New → Web Service**, using the same settings as in `render.yaml`.
+- **API:** runtime **Docker**, plan **Free**, health check path `/health`.
+- **Page:** runtime **Python 3**, plan **Free**, the build and start commands from `render.yaml`, and the `API_URL` variable.
 
 ## Why not Hugging Face Spaces?
 Hugging Face's docs (checked November 2026) say: *"Gradio and Docker Spaces run on compute and require a paid plan to create: PRO for personal accounts."* Streamlit is no longer a native Space type: the `sdk` setting only accepts `gradio`, `docker` or `static`. So this stack can't be hosted there for free.
 
-With a PRO account it does work:
-1. Create a Docker Space.
-2. Add `sdk: docker` and `app_port: 8000` to the YAML header of the Space's README.
-3. Set `MODEL_URL` as a Space variable. Spaces pass variables to the build as build arguments.
-4. Upload the code with `hf upload`.
-
 ## Run the container locally
-This uses your local `models/fraud_detector.joblib`:
 ```bash
-docker build -t fake-job-detector .
+docker build -t fake-job-detector .                 # uses models/fraud_detector.joblib if present, else downloads v1.0
 docker run --rm -p 8000:8000 fake-job-detector      # API on http://localhost:8000/docs
 streamlit run streamlit_app.py                      # page on http://localhost:8501, calls the container
 ```

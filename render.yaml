@@ -1,0 +1,22 @@
+# Render Blueprint: deploys the API and the Streamlit page as two free web services.
+# Dashboard: New > Blueprint > connect this repo > Deploy Blueprint. Step-by-step: DEPLOY.md
+services:
+  # FastAPI model API, built from ./Dockerfile. The repo has no model file, so the build downloads the v1.0
+  # release model (MODEL_URL default in the Dockerfile; add a MODEL_URL env var here to use another release).
+  - type: web
+    name: fake-job-detector-api
+    runtime: docker
+    plan: free
+    healthCheckPath: /health
+
+  # Streamlit page. Free services can't use Render's private network, so it calls the API's public URL.
+  # Python version comes from .python-version (3.11).
+  - type: web
+    name: fake-job-detector
+    runtime: python
+    plan: free
+    buildCommand: pip install -r requirements-ui.txt
+    startCommand: streamlit run streamlit_app.py --server.port $PORT --server.address 0.0.0.0 --server.headless true
+    envVars:
+      - key: API_URL   # the API's public URL, e.g. https://fake-job-detector-api.onrender.com
+        sync: false    # Render asks for the value once, when the Blueprint is created

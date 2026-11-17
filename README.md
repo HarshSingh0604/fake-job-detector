@@ -243,10 +243,10 @@ python -m pytest -q              # 10 API tests, including "API score == offline
 ## Docker
 The image is `python:3.11-slim` with only the serving dependencies ([`requirements-api.txt`](requirements-api.txt)) and runs as a non-root user. The build loads the model once as a check, so a missing or broken model fails the build instead of the running service.
 ```bash
-docker build -t fake-job-detector .                 # uses models/fraud_detector.joblib
+docker build -t fake-job-detector .                 # uses models/fraud_detector.joblib, or downloads the v1.0 release model
 docker run --rm -p 8000:8000 fake-job-detector      # API at http://localhost:8000/docs
 ```
-The trained model is not committed to git. For cloud builds it is published as a GitHub release file and downloaded during the build with `--build-arg MODEL_URL=<url>`. **Free deployment on Render, step by step: [DEPLOY.md](DEPLOY.md).**
+The trained model is not committed to git. It is published as GitHub release v1.0, and the build downloads it when there's no local copy, so a fresh clone builds without training. **Free deployment on Render (a Blueprint for both services), step by step: [DEPLOY.md](DEPLOY.md).**
 
 ## Project structure
 ```
@@ -268,6 +268,7 @@ The trained model is not committed to git. For cloud builds it is published as a
 ├── requirements.txt         everything (includes the two files below)
 ├── requirements-api.txt     serving only (Docker image)
 ├── requirements-ui.txt      Streamlit page only
+├── render.yaml              Render Blueprint (API + page)
 └── DEPLOY.md
 ```
 

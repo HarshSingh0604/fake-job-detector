@@ -1,6 +1,6 @@
 # API image: FastAPI + the trained pipeline.
 #   Local:  docker build -t fake-job-detector . && docker run -p 8000:8000 fake-job-detector
-#   Cloud:  the model isn't in git, so pass its download URL: --build-arg MODEL_URL=https://...
+#   No local model (fresh clone, Render): the build downloads the v1.0 release model automatically.
 FROM python:3.11-slim
 
 ENV PYTHONDONTWRITEBYTECODE=1 PYTHONUNBUFFERED=1 PIP_NO_CACHE_DIR=1 PIP_DISABLE_PIP_VERSION_CHECK=1
@@ -15,14 +15,15 @@ COPY src/ src/
 COPY app/ app/
 COPY models/ models/
 
-# Use the local model if it was copied in, otherwise download it. Loading it here makes a missing or broken
-# model fail the build instead of the live service.
-ARG MODEL_URL=""
+# The model isn't in git. Use the local one if it was copied in (built after training), otherwise download it from
+# the GitHub release. Another model: --build-arg MODEL_URL=... (on Render: a MODEL_URL environment variable).
+# Loading it here makes a missing or broken model fail the build instead of the live service.
+ARG MODEL_URL=https://github.com/HarshSingh0604/fake-job-detector/releases/download/v1.0/fraud_detector.joblib
 RUN set -e; \
-    if [ -n "$MODEL_URL" ]; then \
+    if [ ! -f models/fraud_detector.joblib ]; then \
+      echo "Downloading model from $MODEL_URL"; \
       python -c "import sys, urllib.request as u; u.urlretrieve(sys.argv[1], sys.argv[2])" "$MODEL_URL" models/fraud_detector.joblib; \
     fi; \
-    test -f models/fraud_detector.joblib || { echo "No model: run 'python -m src.train' first or pass --build-arg MODEL_URL=<url>"; exit 1; }; \
     python -c "import joblib; b = joblib.load('models/fraud_detector.joblib'); print('Model OK:', b['model'], b['imbalance'], 'threshold', round(b['threshold'], 3))"
 
 # Don't run as root. Code stays owned by root, so the app can read it but not modify it.
