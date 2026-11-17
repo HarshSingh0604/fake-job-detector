@@ -8,7 +8,7 @@ A machine-learning service that flags fraudulent job postings from their text an
 - SHAP explanations
 - a FastAPI service in Docker, with a Streamlit front end
 
-**Live demo:** Streamlit page: `<add Render URL>` · API docs: `<add Render URL>/docs`
+**Live demo:** [Streamlit page](https://fake-job-detector-8mps.onrender.com) · [API docs (Swagger)](https://fake-job-detector-api-9z2n.onrender.com/docs)
 *(Hosted on Render's free tier: the first request after 15 idle minutes takes about a minute while the service wakes up.)*
 
 ### Results at a glance
@@ -218,7 +218,7 @@ streamlit run streamlit_app.py  # http://localhost:8501  (set API_URL to point a
 ## Run locally
 **Setup:** Python 3.11.
 ```bash
-git clone <this-repo> && cd fake-job-detector
+git clone https://github.com/HarshSingh0604/fake-job-detector.git && cd fake-job-detector
 uv venv --python 3.11 && source .venv/bin/activate   # or: python3.11 -m venv .venv && source .venv/bin/activate
 uv pip install -r requirements.txt                    # or: pip install -r requirements.txt
 brew install libomp                                   # macOS only, needed by XGBoost

@@ -2,20 +2,20 @@
 
 [`render.yaml`](render.yaml) is a Render **Blueprint**. It creates both services in one go from this repo:
 
-| Service | What it runs | Built from | Expected URL |
+| Service | What it runs | Built from | Live URL |
 |---|---|---|---|
-| `fake-job-detector-api` | FastAPI model API | `Dockerfile` | `https://fake-job-detector-api.onrender.com` |
-| `fake-job-detector` | Streamlit page, which calls the API over HTTPS | `requirements-ui.txt` | `https://fake-job-detector.onrender.com` |
+| `fake-job-detector-api` | FastAPI model API | `Dockerfile` | https://fake-job-detector-api-9z2n.onrender.com |
+| `fake-job-detector` | Streamlit page, which calls the API over HTTPS | `requirements-ui.txt` | https://fake-job-detector-8mps.onrender.com |
 
 **Where the model comes from:** the model isn't in git. It's published as the [v1.0 release](https://github.com/HarshSingh0604/fake-job-detector/releases/tag/v1.0) (`fraud_detector.joblib`, 18.1 MB). With no local model, the Docker build downloads it automatically: that URL is the `MODEL_URL` default in the Dockerfile. You don't need to set anything for it.
 
-**About the expected URLs:** Render bases a service's `onrender.com` address on its name, but adds a suffix if the name is already taken. So check the real URLs after the first deploy (step 6).
+**About the URLs:** Render bases a service's `onrender.com` address on its name and adds a random suffix when that name is taken. Both short names already belong to other people's apps: `fake-job-detector-api.onrender.com` is someone else's API. So each deployment gets suffixed URLs like the ones above. **Always copy the real API URL from the dashboard (step 6), and never use the address without the suffix.**
 
 ## Free tier facts (from Render's docs, November 2026)
 - Each free web service gets **512 MB RAM and 0.1 CPU**. The API used 352–377 MB in local tests.
 - A free service **spins down after 15 minutes** with no traffic, and the next request takes **about a minute** to wake it. If both services are asleep, the first visit can take about 2 minutes.
 - Each workspace gets **750 free instance hours a month**, shared by both services. Services only use hours while awake, so a demo that's idle most of the time stays within it.
-- Free services can't receive private-network traffic, so the page calls the API's **public** URL. Render can't fill that URL in automatically, which is why step 4 asks you for it.
+- Free services can't receive private-network traffic, so the page calls the API's **public** URL. Render can't fill that URL in automatically, which is why you set it by hand in step 6.
 
 ## Deploy with the Blueprint (exact clicks)
 1. Go to https://dashboard.render.com and sign in. If you don't have an account, choose **GitHub** to sign up.
@@ -27,7 +27,7 @@
    - **Branch:** `main`
    - **Blueprint Path:** leave as the default (`render.yaml`)
    - Render lists the 2 services it will create, `fake-job-detector-api` and `fake-job-detector`, both on the **Free** plan.
-   - It asks for **`API_URL`**. Enter exactly: `https://fake-job-detector-api.onrender.com`
+   - It asks for **`API_URL`**. The API doesn't exist yet, so enter a placeholder: `https://set-after-deploy.invalid`. You'll set the real value in step 6.
 5. Click **Deploy Blueprint** and wait for both services to finish their first deploy. The API's Docker build takes the longest.
    - In the API's **Logs**, a good build shows:
      ```
@@ -35,17 +35,16 @@
      Model OK: RandomForest smote threshold 0.274
      ```
    - After that, the API logs `Application startup complete`.
-6. **Check the API's real URL.** Open the `fake-job-detector-api` service; its URL is shown under the name at the top.
-   - If it's exactly `https://fake-job-detector-api.onrender.com`, go to step 7.
-   - If it's different (for example with a suffix like `-abcd`), fix the page's setting:
-     1. Open the **`fake-job-detector`** service and go to **Environment**.
-     2. Edit **`API_URL`** to the real API URL, with no trailing slash.
-     3. Save, and choose the option that **rebuilds and deploys**.
+6. **Point the page at the API.** This step is required.
+   1. Open the `fake-job-detector-api` service and copy its URL, shown under the name at the top (for example `https://fake-job-detector-api-9z2n.onrender.com`).
+   2. Check it: `<that URL>/health` must show `"model":"RandomForest"`.
+   3. Open the **`fake-job-detector`** service, go to **Environment**, and edit **`API_URL`** to that URL, with no trailing slash.
+   4. Save, and choose the option that **rebuilds and deploys**.
 7. Test both services:
    - **API:** open `<API URL>/health`. It should show `{"status":"ok","model":"RandomForest",...}`. Then open `<API URL>/docs`.
    - **Page:** open the `fake-job-detector` service's URL, click **Try a fake-looking example**, then **Check posting**. You should see **"Likely fake"** with risk score **0.812**.
    - The first page load can take a minute or two while the services wake up.
-8. Send me both URLs and I'll put them in the README.
+8. Put both URLs in the README's **Live demo** line.
 
 ## Updating
 - **Code changes:** push to `main`. Both services redeploy automatically.
