@@ -1,0 +1,18 @@
+{
+  "title": "Backend Software Engineer",
+  "company_profile": "Brightloop Analytics builds data tools that help retail teams forecast demand. We are a team of 60 engineers, designers and data scientists based in Austin, backed by a Series B round, and we ship to over 400 customers.",
+  "description": "We're looking for a backend engineer to join our platform team. You will design and build the APIs and data pipelines behind our forecasting product, work closely with data scientists to take models to production, and help improve the reliability and performance of services that process millions of records a day. You'll take part in code reviews, the on-call rotation and architecture discussions.",
+  "requirements": "3+ years of professional experience with Python or Go. Experience with PostgreSQL and REST API design. Familiarity with cloud infrastructure (AWS or GCP), Docker and CI/CD. Good written communication skills.",
+  "benefits": "Competitive salary and equity, health, dental and vision insurance, 401(k) matching, 20 days PTO and an annual learning budget.",
+  "employment_type": "Full-time",
+  "required_experience": "Mid-Senior level",
+  "required_education": "Bachelor's Degree",
+  "industry": "Computer Software",
+  "function": "Engineering",
+  "location": "US, TX, Austin",
+  "department": "Engineering",
+  "salary_range": "110000-140000",
+  "telecommuting": false,
+  "has_company_logo": true,
+  "has_questions": true
+}

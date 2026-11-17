@@ -1,0 +1,3 @@
+# Streamlit page only. It talks to the API over HTTP, so it needs no ML libraries.
+streamlit==1.67.0
+requests==2.34.2

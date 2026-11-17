@@ -1,0 +1,68 @@
+Model: RandomForest (smote) | mean score on test 0.075 vs actual fake rate 0.049  (SMOTE-trained scores are inflated, not calibrated)
+Explaining 343 test postings (171 fake) against 200 real training postings...
+Baseline (mean score over background): 0.051
+saved reports/figures/09_shap_importance.png
+
+Feature groups (mean |sum of SHAP in group|):
+Words (TF-IDF)             0.2879
+Lengths + missing count    0.0263
+Yes/no flags               0.0246
+Categories                 0.0176
+
+Global importance (top 20):
+                               feature  mean_abs_shap direction
+                      has_company_logo         0.0176    → real
+                 company_profile_words         0.0170    → real
+required_education = Bachelor's Degree         0.0056    → real
+                         has_questions         0.0048    → real
+                    word: "data entry"         0.0046    → fake
+                          word: "team"         0.0042    → real
+                    requirements_words         0.0041    → real
+                     description_words         0.0040    → real
+                           word: "new"         0.0038    → real
+                             n_missing         0.0037    → fake
+                          word: "earn"         0.0032    → fake
+                       word: "growing"         0.0030    → real
+                         word: "entry"         0.0029    → fake
+                     word: "work home"         0.0029    → fake
+                       has_money_words         0.0028    → fake
+                word: "administrative"         0.0026    → fake
+                       word: "service"         0.0024    → fake
+                      word: "computer"         0.0024    → fake
+                           word: "web"         0.0023    → real
+                     word: "companies"         0.0022    → real
+saved reports/figures/10_shap_beeswarm.png
+
+--- Example fake: 'Director of Product Marketing for Advertisers ' | logo 1 | industry Marketing and Advertising | score 0.906
+saved reports/figures/11_shap_example_fake.png
+                         feature   shap
+ "candidates encouraged" in text 0.0320
+         "signing bonus" in text 0.0316
+       "following perks" in text 0.0315
+     "leveraging career" in text 0.0309
+           "access perk" in text 0.0296
+"represented candidates" in text 0.0244
+         "services town" in text 0.0219
+          "perks expert" in text 0.0214
+   "expert negotiations" in text 0.0207
+  "participate referral" in text 0.0207
+       "town candidates" in text 0.0201
+"encouraged participate" in text 0.0187
+Combined: all words +0.8394 | all structured +0.0153 | baseline 0.0514 + total +0.8546 = score 0.9060
+
+--- Example real: 'iOS Engineer' | logo 1 | industry Internet | score 0.022
+saved reports/figures/12_shap_example_real.png
+                                    feature    shap
+                           "needed" in text  0.0057
+required_education = Bachelor's Degree: yes -0.0031
+                             has_salary = 1  0.0031
+                         "team" not in text  0.0031
+                       has_company_logo = 1 -0.0030
+                         "includes" in text  0.0023
+                    description_words = 109  0.0020
+                             "role" in text -0.0017
+                   industry = Internet: yes -0.0016
+                         "computer" in text  0.0015
+                             "user" in text -0.0015
+                          "general" in text  0.0015
+Combined: all words -0.0195 | all structured -0.0099 | baseline 0.0514 + total -0.0294 = score 0.0220

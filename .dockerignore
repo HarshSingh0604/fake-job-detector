@@ -1,0 +1,11 @@
+# Everything Docker doesn't need. Keeps the build context small (the venv and data are hundreds of MB).
+.git
+.venv
+data
+notebooks
+reports
+tests
+**/__pycache__
+*.pyc
+.DS_Store
+.ipynb_checkpoints

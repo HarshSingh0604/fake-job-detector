@@ -1,0 +1,19 @@
+# Environment
+.venv/
+__pycache__/
+*.pyc
+.ipynb_checkpoints/
+.DS_Store
+
+# Data: download from Kaggle, never commit
+data/*
+!data/.gitkeep
+
+# Trained models: large, regenerate with `python -m src.train`
+models/*
+!models/.gitkeep
+*.joblib
+
+# Secrets / local environment
+.env
+.env.*

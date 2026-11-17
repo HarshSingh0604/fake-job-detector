@@ -1,0 +1,19 @@
+# Python 3.11. Everything to train, analyse, serve and test, pinned to the versions this project was built with.
+-r requirements-api.txt   # serving (also what the Docker image installs)
+-r requirements-ui.txt    # Streamlit page
+
+# Training + analysis
+matplotlib==3.11.2
+seaborn==0.13.2
+xgboost==3.2.0
+shap==0.51.0
+
+# Testing (FastAPI's TestClient uses httpx2)
+pytest==9.2.0
+httpx2==2.16.2
+
+# Notebooks
+jupyter==1.1.1
+ipykernel==7.4.0
+nbconvert==7.17.2
+nbformat==5.11.1
